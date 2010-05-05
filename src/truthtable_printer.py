@@ -22,9 +22,10 @@ def parse(logical_expression):
 
   for t in tokens:
     result[t] = []
-    
+  
+ 
   if len(tokens) == 1:
-    result[logical_expression] = [v for v in bin(2)[2:]]
+    result[tokens[0]] = [v for v in bin(2)[2:]]
     return result  
   
   max_combinations = 2 ** len(tokens)
