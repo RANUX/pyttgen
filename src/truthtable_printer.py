@@ -6,6 +6,9 @@ Created on 04.05.2010
 '''
 
 import re
+import doctest
+import ply.lex as lex
+import ply.yacc as yacc  
 
 
 def remove_duplicates(values):
@@ -98,99 +101,111 @@ class LogicalValue():
     """
     return LogicalValue('NOT '+self.name, [int(not int(v)) for v in self.values])
     
+  def __eq__(self, other):
+    return self.name == other.name and self.values == other.values
+  
   def __repr__(self):
     return self.values.__repr__() + ' ' + self.name
   
 
-tokens = ('VALUE','OR','AND','NOT','LPAREN','RPAREN',)
-
-t_OR    = r'OR|\+|\|'
-t_AND  = r'AND|\*|\&'
-t_NOT  = r'NOT|~'
-t_LPAREN  = r'\('
-t_RPAREN  = r'\)'
-
-def t_VALUE(t):
-    r'[a-z][a-z0-9_]*'
-    t.value = LogicalValue(t.value, init_logical_vals[t.value])
-    return t
+class TruthTableConstructor:
   
-t_ignore = " \t"
+  def __init__(self):
+    lex.lex(module=self)
+    yacc.yacc(module=self)
+    self.table = []
+
+    
+  def build(self, proposition):
+    self.init_logical_vals = parse(proposition)
+    yacc.parse(proposition)
+    
+  def run(self):  
+    while 1:
+      self.table = []
+      try:
+        s = raw_input('> ')
+        self.init_logical_vals = parse(s)
+        for k,lst in self.init_logical_vals.items():
+          print [int(v) for v in lst], ' ', k
+      except EOFError:
+        break
+      if not s: continue
+      yacc.parse(s)
+      for logval in self.table:
+        print logval
+
+  tokens = ('VALUE','OR','AND','NOT','LPAREN','RPAREN',)
   
-def t_newline(t):
-    r'\n+'
-    t.lexer.lineno += t.value.count("\n")
+  t_OR    = r'OR|\+|\|'
+  t_AND  = r'AND|\*|\&'
+  t_NOT  = r'NOT|~'
+  t_LPAREN  = r'\('
+  t_RPAREN  = r'\)'
+  
+  def t_VALUE(self, t):
+      r'[a-z][a-z0-9_]*'
+      t.value = LogicalValue(t.value, self.init_logical_vals[t.value])
+      return t
     
-def t_error(t):
-    print("Illegal character '%s'" % t.value[0])
-    t.lexer.skip(1)
-
-import ply.lex as lex
-lex.lex()
-
-import doctest
-doctest.testmod()
+  t_ignore = " \t"
     
-#for tok in lexer:
-#    print tok
-#
-## Parsing rules
-precedence = ( ('left','OR'), 
-                      ('left','AND'), 
-                      ('right','NOT'),)
-
-def p_statement_expr(p):
-    'statement : expression'
-    #p[1].reverse = True
-    #print(p[1])
-    pass
+  def t_newline(self, t):
+      r'\n+'
+      t.lexer.lineno += t.value.count("\n")
       
-def p_expression_or(p):
-  """expression : expression OR expression
-  """
-  p[0] = p[1].OR(p[3])
-  print p[0]
-
-
-def p_expression_and(p):
-  """expression : expression AND expression
-  """
-  p[0] = p[1].AND(p[3])
-  print p[0]
-
-
-def p_expression_not(p):
-  """expression : NOT expression
-  """
-  p[0] = p[2].NOT()
-  print p[0]
+  def t_error(self, t):
+      print("Illegal character '%s'" % t.value[0])
+      t.lexer.skip(1)
   
-def p_expression_group(p):
-        'expression : LPAREN expression RPAREN'
-        p[0] = p[2]
-       
-def p_expression_value(p):
-    "expression : VALUE"
-    p[0] = p[1]
+  precedence = ( ('left','OR'), 
+                        ('left','AND'), 
+                        ('right','NOT'),)
+  
+        
+  def p_expression_or(self, p):
+    """expression : expression OR expression
+    """
+    p[0] = p[1].OR(p[3])
+    self.table.append(p[0])
 
+  
+  
+  def p_expression_and(self, p):
+    """expression : expression AND expression
+    """
+    p[0] = p[1].AND(p[3])
+    self.table.append(p[0])
+
+  
+  
+  def p_expression_not(self, p):
+    """expression : NOT expression
+    """
+    p[0] = p[2].NOT()
+    self.table.append(p[0])
 
     
-def p_error(p):
-    if p:
-        print("Syntax error at '%s'" % p.value)
-    else:
-        print("Syntax error at EOF")
-    
-import ply.yacc as yacc    
-yacc.yacc()
+  def p_expression_group(self, p):
+          'expression : LPAREN expression RPAREN'
+          p[2].name = '('+p[2].name+')'
+          p[0] = p[2]
+         
+  def p_expression_value(self, p):
+      "expression : VALUE"
+      p[0] = p[1]
   
-while 1:
-  try:
-    s = raw_input('> ')
-    init_logical_vals = parse(s)
-    for k,lst in init_logical_vals.items():
-      print [int(v) for v in lst], ' ', k
-  except EOFError:
-    break
-  if not s: continue
-  yacc.parse(s)
+  
+      
+  def p_error(self, p):
+      if p:
+          print("Syntax error at '%s'" % p.value)
+      else:
+          print("Syntax error at EOF")
+      
+
+
+if __name__ == '__main__':
+    doctest.testmod()
+    ttconstructor = TruthTableConstructor()
+    ttconstructor.run()
