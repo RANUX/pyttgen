@@ -100,6 +100,17 @@ class LogicalValue():
     [0, 0, 1, 1] NOT p
     """
     return LogicalValue('NOT '+self.name, [int(not int(v)) for v in self.values])
+  
+  def IMPL(self, other):
+    """implication"""
+    new_values = []
+    for v, ov in zip(self.values, other.values):
+      if int(v) == 1 and int(ov) == 0:
+        new_values.append(0)
+      else:
+        new_values.append(1)
+  
+    return LogicalValue(self.name+' -> '+other.name, new_values)
     
   def __eq__(self, other):
     return self.name == other.name and self.values == other.values
@@ -135,9 +146,10 @@ class TruthTableConstructor:
       for logval in self.table:
         print logval
 
-  tokens = ('VALUE','OR','AND','NOT','LPAREN','RPAREN',)
+  tokens = ('VALUE','IMPL','OR','AND','NOT','LPAREN','RPAREN',)
   
-  t_OR    = r'OR|\+|\|'
+  t_IMPL = r'IMPL|\-\>'
+  t_OR   = r'OR|\+|\|'
   t_AND  = r'AND|\*|\&'
   t_NOT  = r'NOT|~'
   t_LPAREN  = r'\('
@@ -158,10 +170,16 @@ class TruthTableConstructor:
       print("Illegal character '%s'" % t.value[0])
       t.lexer.skip(1)
   
-  precedence = ( ('left','OR'), 
-                        ('left','AND'), 
-                        ('right','NOT'),)
+  precedence = ( ('left', 'IMPL'),
+                 ('left','OR'), 
+                 ('left','AND'), 
+                 ('right','NOT'),)
   
+  def p_expression_impl(self, p):
+    """expression : expression IMPL expression
+    """ 
+    p[0] = p[1].IMPL(p[3])
+    self.table.append(p[0])
         
   def p_expression_or(self, p):
     """expression : expression OR expression

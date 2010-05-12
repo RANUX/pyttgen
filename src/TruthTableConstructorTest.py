@@ -32,7 +32,7 @@ class Test(unittest.TestCase):
     def test_implication(self):
       ttconstructor = TruthTableConstructor()
       ttconstructor.build("p -> q")
-      assert ttconstructor.table[0] == LogicalValue("NOT p", [1, 0,1,1])
+      assert ttconstructor.table[0] == LogicalValue("p -> q", [1, 1, 0, 1])
       
 
 
