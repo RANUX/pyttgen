@@ -2,7 +2,7 @@
 '''
 Created on 04.05.2010
 
-@author: ranux
+@author: Alexander S. Razzhivin
 '''
 
 import re
@@ -37,7 +37,9 @@ def parse(logical_expression):
   result = {}
   
   tokens = re.findall('[a-z]+', logical_expression)
-
+  if 'quit' in tokens or 'exit' in tokens:
+    exit(0)
+    
   tokens = sorted(remove_duplicates(tokens))
   for t in tokens:
     result[t] = []
@@ -111,7 +113,10 @@ class LogicalValue():
         new_values.append(1)
   
     return LogicalValue(self.name+' -> '+other.name, new_values)
-    
+  
+  def EQUALS(self, other):
+    return self.IMPL(other).AND(other.IMPL(self))  
+  
   def __eq__(self, other):
     return self.name == other.name and self.values == other.values
   
@@ -146,8 +151,9 @@ class TruthTableConstructor:
       for logval in self.table:
         print logval
 
-  tokens = ('VALUE','IMPL','OR','AND','NOT','LPAREN','RPAREN',)
+  tokens = ('VALUE', 'EQUALS','IMPL','OR','AND','NOT','LPAREN','RPAREN',)
   
+  t_EQUALS = r'EQUALS|\<\-\>'
   t_IMPL = r'IMPL|\-\>'
   t_OR   = r'OR|\+|\|'
   t_AND  = r'AND|\*|\&'
@@ -170,11 +176,19 @@ class TruthTableConstructor:
       print("Illegal character '%s'" % t.value[0])
       t.lexer.skip(1)
   
-  precedence = ( ('left', 'IMPL'),
+  precedence = ( ('left', 'EQUALS'),
+                 ('left', 'IMPL'),
                  ('left','OR'), 
                  ('left','AND'), 
                  ('right','NOT'),)
   
+  def p_expression_equals(self, p):
+    """expression : expression EQUALS expression
+    """ 
+    p[0] = p[1].EQUALS(p[3])
+    p[0].name = p[1].name +' <-> '+p[3].name
+    self.table.append(p[0])
+    
   def p_expression_impl(self, p):
     """expression : expression IMPL expression
     """ 

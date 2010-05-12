@@ -1,10 +1,10 @@
 '''
 Created on 12.05.2010
 
-@author: ranux
+@author: Alexander S. Razzhivin
 '''
 import unittest
-from truthtable_printer import *
+from truthtable_constructor import *
 
 class Test(unittest.TestCase):
 
@@ -34,7 +34,10 @@ class Test(unittest.TestCase):
       ttconstructor.build("p -> q")
       assert ttconstructor.table[0] == LogicalValue("p -> q", [1, 1, 0, 1])
       
-
+    def test_equality(self):
+      ttconstructor = TruthTableConstructor()
+      ttconstructor.build("p <-> q")
+      assert ttconstructor.table[0] == LogicalValue("p <-> q", [1, 0, 0, 1])
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
