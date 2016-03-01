@@ -1,7 +1,7 @@
 #encoding:utf8
 '''
 Created on 04.05.2010
-Copyright (C) 2010 Alexander S. Razzhivin ( site http://httpbots.com )
+Copyright (C) 2010 Alexander S. Razzhivin ( site https://github.com/RANUX/ )
 
 #  This program is free software: you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
